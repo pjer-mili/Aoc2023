@@ -6,49 +6,31 @@ fn main() {
     for games in reader.lines(){
         match games {
             Ok(game) => {
-                let (game_id, is_possible) = calculate_game(&game);
-                if is_possible {
-                    sum = sum + game_id;
-                }
+                let max_hash = calculate_game(&game);
+                sum = sum + (max_hash.get("red").unwrap() * max_hash.get("blue").unwrap() * max_hash.get("green").unwrap());
             }
             Err(e) => {
                 eprintln!("Cannot read line, {}", e);
             }
         }
     }
-     println!("The sum of possible game ids is: {}", sum);
+     println!("The sum of power of sets is: {}", sum);
 }
 
-fn calculate_game (line: &str) -> (u32, bool){
-    let sets:Vec<&str> = line.split(|c| c == ';' || c == ':').collect();
-    let game_id: u32 = sets[0].split_whitespace().into_iter().last().unwrap().parse().expect("Can't parse string to number");
-    for set in sets.into_iter().skip(1){
-        if check_set(set.trim()) == false {
-            return (game_id, false)
-        }
-    }
-    (game_id, true)
-}
+fn calculate_game (game: &str) -> HashMap<&str, u32>{
 
-fn check_set (set: &str) -> bool {
-    let limits = HashMap::from([("red", 12), ("green", 13), ("blue", 14)]);
-    let cubes: Vec<&str> = set.split(", ").collect();
-    for cube in cubes.into_iter() {
-        let split: Vec<&str> = cube.split_whitespace().collect();
-        let value = split[0].parse::<u32>().unwrap();
-        let color = split[1];
-        match color {
-            "green" => if value.gt(limits.get(color).unwrap()) {
-                return false
-            }
-            "blue" => if value.gt(limits.get(color).unwrap()) {
-                return false
-            }
-            "red" => if value.gt(limits.get(color).unwrap()) {
-                return false
-            }
-            _ => panic!("Color can only be 'red', 'green' or 'blue'")
+    let mut maxes = HashMap::from([("red", 0), ("blue", 0), ("green", 0)]);
+
+    let game_split:Vec<&str> = game.split(": ").collect();
+    for cube in game_split.into_iter().skip(1){
+        let cube_strings:Vec<&str> = cube.split(|c|  c == ',' || c == ';').collect();
+        for cube_string in cube_strings{
+            let die: Vec<&str> = cube_string.split_whitespace().collect();
+            let value = die[0].parse::<u32>().expect("Could not parse string into number");
+            let color = die[1];
+            let current_value = maxes.get(color).expect("Should get a number");
+            if value > *current_value {maxes.insert(color, value);}
         }
     }
-    true
+    maxes
 }
