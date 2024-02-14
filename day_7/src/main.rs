@@ -13,12 +13,23 @@ enum Type {
 
 impl From<HashMap<char, i32>> for Type {
     fn from(card_map: HashMap<char, i32>) -> Self {
-        let mut vals: Vec<i32> = card_map.values().map(|count| *count).collect();
+        let joker_count = *card_map.get(&'J').unwrap_or(&0);
+        let mut vals: Vec<i32> = card_map.iter() 
+            .filter_map(|(k, v)| match k {
+                'J' => None,
+                _ => Some(*v)
+            })
+            .collect();
 
         vals.sort();
         vals.reverse();
   
-        return match &vals[0] {
+        match vals.first_mut() {
+            Some(first) => *first += joker_count,
+            None => return Type::FiveOfAKind
+        }
+
+        match &vals[0] {
           5 => Type::FiveOfAKind,
           4 => Type::FourOfAKind,
           3 => {
@@ -54,7 +65,7 @@ impl Hand {
     }
 
     fn card_cmp(&self, other: &Self) -> Ordering {
-    let numbers_map = HashMap::from([('A', 15), ('K', 14), ('Q', 13), ('J', 12), ('T', 10), ('9', 9), ('8', 8), ('7', 7), ('6', 6), ('5', 5), ('4', 4), ('3', 3), ('2', 2), ('1', 1)]);
+    let numbers_map = HashMap::from([('A', 15), ('K', 14), ('Q', 13), ('T', 10), ('9', 9), ('8', 8), ('7', 7), ('6', 6), ('5', 5), ('4', 4), ('3', 3), ('2', 2), ('1', 1), ('J', 0)]);
     let mut ordering: Ordering = Ordering::Equal;
         for i in 0..5 {
             let my_value = numbers_map.get(&self.cards[i]);
@@ -127,7 +138,7 @@ impl Ord for Hand {
 fn main() {
     let file = File::open("input.txt").expect("Could not open file");
     let reader = BufReader::new(file);
-    let mut hands: Vec<Hand> = parse_file(reader);      
+    let mut hands: Vec<Hand> = parse_file(reader);   
     hands.sort();
 
     let mut result: u64 = 0;
@@ -143,7 +154,6 @@ fn parse_file(reader: BufReader<File>) -> Vec<Hand> {
     let mut hands: Vec<Hand> = vec![];
     for line in reader.lines().into_iter() {
        let mut cards_map: HashMap<char, i32> = Default::default();
-
        let mut cards: Vec<char> = vec![];
        let split_line = line.as_ref().unwrap().split_ascii_whitespace().collect::<Vec<&str>>();
        for c in split_line[0].chars(){
@@ -155,7 +165,7 @@ fn parse_file(reader: BufReader<File>) -> Vec<Hand> {
                 cards_map.insert(c, 1);
             }
        }
-      
+
         let bet = split_line[1].parse::<u64>().expect("Could not parse bet");
         let hand_type = Type::from(cards_map);
         hands.push(Hand::new(cards, bet, hand_type));
