@@ -54,11 +54,11 @@ impl Node {
 }
 
 fn main() {
-    let file = File::open("input.txt").expect("Could not open file");
+    let file = File::open("test.txt").expect("Could not open file");
     let reader = BufReader::new(file);
     let (input, nodes) = parse_file(reader);
     let mut directions = Directions::from(input);
-
+    
     let mut start_nodes = get_start_nodes(&nodes);
     let mut steps_array :Vec<u128> = vec![];
     
@@ -121,23 +121,11 @@ fn lcm(first: u128, second: u128) -> u128 {
     first * second / gcd(first, second)
 }
 
-fn gcd(first: u128, second: u128) -> u128 {
-    let mut max = first;
-    let mut min = second;
-
-    if min > max {
-        let temp = max;
-        max = min;
-        min = temp;
+fn gcd(mut first: u128, mut second: u128) -> u128 {
+    while second != 0 {
+        let temp = second;
+        second = first % second;
+        first = temp;
     }
-
-    loop {
-         let res = max % min;
-         if res == 0 {
-            return min;
-         }
-          
-          max = min;
-          min = res;
-    }
+    first
 }
