@@ -14,6 +14,10 @@ impl History {
         self.inputs.iter().all(|&value| value == 0)
     }
 
+    fn first(&self) -> i32 {
+        *self.inputs.first().unwrap()
+    }
+
     fn last(&self) -> i32 {
         *self.inputs.last().unwrap()
     }
@@ -31,6 +35,10 @@ impl History {
     fn sum_next(&self) -> i32 {
         self.last() + self.reduced_histories().iter().rfold(0, |value, history| history.last() + value)
     }
+
+    fn sum_prev(&self) -> i32 {
+        self.first() - self.reduced_histories().iter().rfold(0, |value, history| history.first() - value)
+    }
 }
 
 
@@ -41,6 +49,10 @@ struct Report {
 impl Report {
     fn sum_next(&self) -> i32 {
         self.histories.iter().map(|history| history.sum_next()).sum()
+    }
+
+    fn sum_prev(&self) -> i32 {
+        self.histories.iter().map(|history| history.sum_prev()).sum()
     }
 }
 
@@ -54,7 +66,8 @@ fn main() {
     let file = File::open("input.txt").expect("Could not opet file");
     let reader = BufReader::new(file);
     let report = parse_file(reader);
-    println!("Sum: {}", report.sum_next());
+    println!("PART 1: {}", report.sum_next());
+    println!("PART 2: {}", report.sum_prev());
 }
 
 fn parse_file(reader: BufReader<File>) -> Report {
